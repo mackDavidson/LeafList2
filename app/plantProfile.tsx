@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { getDatabase } from './dbFuncs';
+import { getDatabase, getPlantById } from './dbFuncs';
 
 export default function PlantProfileScreen() {
   const router = useRouter();
@@ -18,10 +18,15 @@ export default function PlantProfileScreen() {
     async function loadPlantData() {
       try {
         setLoading(true);
-        const plantData = await getDatabase();
+        const db = await getDatabase();
+        const plantData = await db.getPlantById(plantID); // Fix this function
         
         if (plantData) {
-          setPlant(plantData);
+          setPlant({
+            Nickname: plantData.Nickname,
+            Location: plantData.Location,
+            Species: plantData.Species,
+          });
         } else {
           Alert.alert('Error', 'Plant not found.' + error);
         }
@@ -40,7 +45,7 @@ export default function PlantProfileScreen() {
     // Navigate to edit screen with plant data
     router.push({
       pathname: '/editPlantProfile',
-      params: { plantID, initialData: JSON.stringify(plant) }
+      //params: { plantID, initialData: JSON.stringify(plant) }
     });
   };
 

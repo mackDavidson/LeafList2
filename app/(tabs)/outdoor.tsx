@@ -120,7 +120,7 @@ export default function outdoor() {
       alignItems: 'center',
     },
     plantText: {
-      fontSize: 15,
+      fontSize: 18,
       padding: 7,
       color: '#1B5E20', // Darker green for contrast
       flex: 1,

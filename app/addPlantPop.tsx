@@ -3,6 +3,7 @@ import { addPlant } from './dbFuncs';
 import { useState, } from 'react';
 import { useRouter } from "expo-router";
 import SpeciesDropdown from './src/components/SpeciesDropdown'
+import LocationDropdown from './src/components/LocationDropdown';
 
 
 export default function AddPlantPop() {
@@ -11,6 +12,7 @@ export default function AddPlantPop() {
     // State for form inputs
     const [Nickname, setNickname] = useState('');
     const [speciesID, setSpeciesID] = useState(0);
+    const [locationID, setLocationID] = useState(0);
     const [isIndoor, setIsIndoor] = useState(true); // Default to indoor
 
     const handleSpeciesSelect = (speciesID: number): void => {
@@ -18,10 +20,16 @@ export default function AddPlantPop() {
         setSpeciesID(speciesID);
         console.log('Selected Species ID:', speciesID);
     };
+
+    const handleLocationSelect = (locationID: number): void => {
+        // Update the location ID state when a location is selected
+        setLocationID(locationID);
+        console.log('Selected Location ID:', locationID);
+    };
    
     const handleAddPlant = async () => {
         // Validate inputs
-        if (!Nickname.trim() || speciesID===0) {
+        if (!Nickname.trim() || speciesID===0 || locationID===0) {
             Alert.alert("Missing Information", "Please fill in all fields");
             return;
         }
@@ -31,7 +39,8 @@ export default function AddPlantPop() {
             const success = await addPlant(
                 Nickname.trim(),
                 speciesID,
-                isIndoor ? 1 : 0
+                isIndoor ? 1 : 0,
+                locationID
             );
            
             if (success) {
@@ -71,6 +80,12 @@ export default function AddPlantPop() {
             <View style={styles.inputContainer}>
                 <Text style={styles.label}>Species:</Text>
                 <SpeciesDropdown onSpeciesSelect={handleSpeciesSelect} />
+            </View>
+            
+            {/* Location Input */}
+            <View style={styles.inputContainer}>
+                <Text style={styles.label}>Location:</Text>
+                <LocationDropdown onLocationSelect={handleLocationSelect} />
             </View>
            
             {/* Indoor/Outdoor Selection */}

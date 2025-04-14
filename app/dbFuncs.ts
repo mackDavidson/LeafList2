@@ -1,6 +1,5 @@
 // Functions to interact with SQLite database
 import * as SQLite from 'expo-sqlite';
-import * as FileSystem from 'expo-file-system';
 
 let db = SQLite.openDatabaseAsync('../species.db');
 
@@ -14,17 +13,11 @@ export const setupDatabase = async () => {
   try {
     const db = await getDatabase();
 
-
-    // Log the database path to see where it's being stored
-    console.log("Database path:", db._name || db.name || "Unknown");
-
-
     // Check if tables exists
     const tableCheck = await db.getFirstAsync(
         "SELECT name FROM sqlite_master WHERE type='table' AND name='species';"
       );
       console.log("Table exists check:", tableCheck);
-
 
     // Create tables if they doesn't exist
     await db.execAsync(`
@@ -247,17 +240,29 @@ export const addSpecies = async (commonName : string, family : string, indoor : 
   }
 };
 
-export const addPlant = async (Nickname : string, speciesID : number , indoor : number) => {
+export const addPlant = async (Nickname : string, speciesID : number , indoor : number, locationID : number) => {
   try {
     const db = await getDatabase();
     await db.runAsync(
-      'INSERT INTO plants (Nickname, speciesID, indoor) VALUES (?, ?, ?)',
-      [Nickname, speciesID, indoor ? 1 : 0]
+      'INSERT INTO plants (Nickname, speciesID, indoor) VALUES (?, ?, ?, ?)',
+      [Nickname, speciesID, indoor ? 1 : 0, locationID]
     );
     return true;
   } catch (error) {
     console.error('Error adding plants:', error);
     return false;
+  }
+};
+
+export const getPlantById = async (id: string | number | boolean | Uint8Array<ArrayBufferLike> | null) => {
+  try {
+    const db = await getDatabase();
+    const plant = await db.getFirstAsync('SELECT * FROM plants WHERE id = ?', [id]);
+    return plant || null;
+  }
+  catch (error) {
+    console.error('Error fetching plant by ID:', error);
+    return null;
   }
 };
 
