@@ -321,6 +321,21 @@ export const addSpecies = async (commonName : string, indoor : number) => {
   }
 };
 
+export const addLocation = async (locationName : string, indoor : number) => {
+  try {
+    const db = await getDatabase();
+    await db.runAsync(
+      'INSERT INTO locations (locationName, indoor) VALUES (?, ?)',
+      [locationName, indoor ? 1 : 0]
+    );
+    return true;
+  }
+  catch (error) {
+    console.error('Error adding location:', error);
+    return false;
+  }
+};
+
 export const addPlant = async (Nickname : string, speciesID : number , indoor : number, locationID : number) => {
   try {
     const db = await getDatabase();

@@ -1,26 +1,25 @@
 import { Text, View, StyleSheet, TouchableOpacity, TextInput, Alert } from 'react-native';
-import { addSpecies } from './dbFuncs';
+import { addLocation } from './dbFuncs';
 import { useState } from 'react';
 import { useRouter } from "expo-router";
 
-
-export default function AddSpeciesPop() {
+export default function AddLocationPop() {
     const router = useRouter();
    
-    const [commonName, setCommonName] = useState('');
-    const [isIndoor, setIsIndoor] = useState(true); // Default to indoor
+    const [locationName, setLocationName] = useState('');
+    const [isIndoor, setIsIndoor] = useState(true); 
    
-    const handleAddSpecies = async () => {
+    const handleAddLocation = async () => {
         // Validate inputs
-        if (!commonName.trim()) {
+        if (!locationName.trim()) {
             Alert.alert("Missing Information", "Please fill in all fields");
             return;
         }
        
         try {
             // Adding species to the database
-            const success = await addSpecies(
-                commonName.trim(),
+            const success = await addLocation(
+                locationName.trim(),
                 isIndoor ? 1 : 0
             );
            
@@ -28,7 +27,7 @@ export default function AddSpeciesPop() {
                 // Show success message
                 Alert.alert(
                     "Success",
-                    `${commonName} added successfully!`,
+                    `${locationName} added successfully!`,
                     [{ text: "OK", onPress: () => router.back() }]
                 );
             } else {
@@ -40,26 +39,25 @@ export default function AddSpeciesPop() {
         }
     };
 
-
     return (
         <View style={styles.container}>
             <Text style={styles.header}>Add New Species</Text>
            
-            {/* Common Name Input */}
+            {/* Location Name Input */}
             <View style={styles.inputContainer}>
-                <Text style={styles.label}>Common Name:</Text>
+                <Text style={styles.label}>Location Name:</Text>
                 <TextInput
                     style={styles.input}
-                    value={commonName}
-                    onChangeText={setCommonName}
-                    placeholder="e.g., Snake Plant"
+                    value={locationName}
+                    onChangeText={setLocationName}
+                    placeholder="e.g., Living Room Window"
                     placeholderTextColor="#888"
                 />
             </View>
            
-            {/* Indoor/Outdoor Selection */}
+            {/* Indoor or Outdoor */}
             <View style={styles.inputContainer}>
-                <Text style={styles.label}>Plant Type:</Text>
+                <Text style={styles.label}>Location Type:</Text>
                 <View style={styles.toggleContainer}>
                     <TouchableOpacity
                         style={[
@@ -92,9 +90,9 @@ export default function AddSpeciesPop() {
             {/* Add Button */}
             <TouchableOpacity
                 style={styles.customBtn}
-                onPress={handleAddSpecies}
+                onPress={handleAddLocation}
             >
-                <Text style={styles.customBtnText}>Add Species</Text>
+                <Text style={styles.customBtnText}>Add Location</Text>
             </TouchableOpacity>
            
             {/* Cancel Button */}
