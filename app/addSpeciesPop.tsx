@@ -9,22 +9,19 @@ export default function AddSpeciesPop() {
    
     // State for form inputs
     const [commonName, setCommonName] = useState('');
-    const [family, setFamily] = useState('');
     const [isIndoor, setIsIndoor] = useState(true); // Default to indoor
    
     const handleAddSpecies = async () => {
         // Validate inputs
-        if (!commonName.trim() || !family.trim()) {
+        if (!commonName.trim()) {
             Alert.alert("Missing Information", "Please fill in all fields");
             return;
         }
        
         try {
-            // Call the addSpecies function with individual parameters
-            // This matches your dbFuncs.ts implementation
+            // Adding species to the database
             const success = await addSpecies(
                 commonName.trim(),
-                family.trim(),
                 isIndoor ? 1 : 0
             );
            
@@ -57,18 +54,6 @@ export default function AddSpeciesPop() {
                     value={commonName}
                     onChangeText={setCommonName}
                     placeholder="e.g., Snake Plant"
-                    placeholderTextColor="#888"
-                />
-            </View>
-           
-            {/* Family Input */}
-            <View style={styles.inputContainer}>
-                <Text style={styles.label}>Family:</Text>
-                <TextInput
-                    style={styles.input}
-                    value={family}
-                    onChangeText={setFamily}
-                    placeholder="e.g., Asparagaceae"
                     placeholderTextColor="#888"
                 />
             </View>

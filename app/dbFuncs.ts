@@ -1,12 +1,15 @@
 // Functions to interact with SQLite database
 import * as SQLite from 'expo-sqlite';
+import * as FileSystem from 'expo-file-system';
 
-let db = SQLite.openDatabaseAsync('../species.db');
+const dbName = 'leaflist.db'; 
+let db : SQLite.SQLiteDatabase | null = null;
 
 export const getDatabase = async () => {
-  if (db) return db;
-  db = await SQLite.openDatabaseAsync('../species.db');
-  return db;
+  if (db === null) {
+    db = await SQLite.openDatabaseAsync(dbName);
+  }
+    return db;
 };
 
 export const setupDatabase = async () => {
@@ -14,96 +17,189 @@ export const setupDatabase = async () => {
     const db = await getDatabase();
 
     // Check if tables exists
-    const tableCheck = await db.getFirstAsync(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name='species';"
-      );
-      console.log("Table exists check:", tableCheck);
+    const existingTables = await db.getAllAsync(`
+      SELECT name 
+      FROM sqlite_master 
+      WHERE type='table' AND name NOT LIKE 'sqlite_%'
+      ORDER BY name;
+    `);
+    console.log('Existing tables:', existingTables.map(t => t.name));
+
+      // await db.execAsync(`
+      //   PRAGMA foreign_keys = OFF;       
+      //   DROP TABLE IF EXISTS plants;
+      //   DROP TABLE IF EXISTS plantLogs;
+      //   DROP TABLE IF EXISTS plantImages;
+      //   DROP TABLE IF EXISTS species;
+      //   DROP TABLE IF EXISTS locations;
+      //   PRAGMA foreign_keys = ON;
+      // `);
+
+      //console.log('Existing tables:', existingTables.map(t => t.name));      
 
     // Create tables if they doesn't exist
     await db.execAsync(`
-      PRAGMA foreign_keys = ON;
+      
       CREATE TABLE IF NOT EXISTS species (
         speciesID INTEGER NOT NULL PRIMARY KEY,
         commonName TEXT NOT NULL,
-        family TEXT NOT NULL,
-        indoor INT NOT NULL
+        indoor INT NOT NULL,
+        family TEXT NULL,
+        UNIQUE (commonName) ON CONFLICT ABORT
       );
+
+      CREATE TABLE IF NOT EXISTS locations (
+        locationID INTEGER NOT NULL PRIMARY KEY,
+        locationName TEXT NOT NULL,
+        indoor INT NOT NULL,
+        UNIQUE (locationName) ON CONFLICT ABORT
+      );
+
+      CREATE TABLE IF NOT EXISTS plantImages (
+        imageID INTEGER NOT NULL PRIMARY KEY,
+        image TEXT NULL        
+      );
+
+       CREATE TABLE IF NOT EXISTS plantLogs (
+        logID INTEGER NOT NULL PRIMARY KEY,
+        logDate TEXT NULL,
+        notes TEXT NULL
+      );
+
       CREATE TABLE IF NOT EXISTS plants (
        plantID INTEGER NOT NULL PRIMARY KEY,
        speciesID INTEGER NOT NULL,
+       locationID INTEGER NOT NULL,
+       imageID INTEGER NULL,
+       logID INTEGER NULL,
        Nickname TEXT NOT NULL,
        indoor INT NOT NULL,
        dateAcquired TEXT NULL,
-       location TEXT NULL, 
+       lastFertilized TEXT NULL, 
        lastWatered TEXT NULL,
-       FOREIGN KEY (speciesID) REFERENCES species(speciesID)
-      );
-      CREATE TABLE IF NOT EXISTS locations (
-        locationsID INTEGER NOT NULL PRIMARY KEY,
-        locationName TEXT NOT NULL
-      );
-      CREATE TABLE IF NOT EXISTS plant_Images (
-        imageID INTEGER NOT NULL PRIMARY KEY,
-        plantID INTEGER NOT NULL,
-        image TEXT NOT NULL,
-        FOREIGN KEY (plantID) REFERENCES plants(plantID) ON DELETE CASCADE
+       UNIQUE(Nickname, speciesID, locationID) ON CONFLICT ABORT,
+       FOREIGN KEY (speciesID) REFERENCES species(speciesID) ON DELETE CASCADE,
+       FOREIGN KEY (locationID) REFERENCES locations(locationID) ON DELETE CASCADE,
+       FOREIGN KEY (imageID) REFERENCES plantImages(imageID) ON DELETE CASCADE,
+       FOREIGN KEY (logID) REFERENCES plantLogs(logID) ON DELETE CASCADE
       );
     `);
+
+    // Check all existing tables
+    const tableResults = await db.getAllAsync(`
+      SELECT name 
+      FROM sqlite_master 
+      WHERE type='table' 
+      ORDER BY name;
+    `);
+    
+    console.log('Final tables in database:', tableResults.map(t => t.name));
+
+    // Log row counts for each table
+    for (const table of tableResults) {
+      const countResult = await db.getFirstAsync(
+        `SELECT COUNT(*) as count FROM ${table.name}`
+      );
+      console.log(`${table.name} has ${countResult.count} rows`);
+    }
    
     // Check if data exists in species before inserting
     const countSpeciesResult = await db.getFirstAsync(`SELECT COUNT(*) as count FROM species`);
-    console.log("Existing record count:", countSpeciesResult.count)
     if (countSpeciesResult.count === 0) {
-      console.log("No records found, inserting initial data");
       await db.execAsync(`
-        INSERT INTO species (commonName, family, indoor) VALUES ('Snake Plant', 'Asparagaceae', 1);
-        INSERT INTO species (commonName, family, indoor) VALUES ('Hosta', 'Asparagaceae', 0);
-        INSERT INTO species (commonName, family, indoor) VALUES ('Boston Fern', 'Nephrolepidaceae', 1);
+        INSERT INTO species (commonName, indoor) VALUES 
+          ('Snake Plant', 1),
+          ('Hosta', 0),
+          ('Boston Fern', 1),
+          ('Philodendren', 1),
+          ('ZZ Plant', 1),
+          ('Pothos', 1);
       `);
-     
-      const afterInsertCount = await db.getFirstAsync("SELECT COUNT(*) as count FROM species;");
-      console.log("After insert count:", afterInsertCount.count);
-    } else {
-      console.log("Records already exist, skipping initial insert");
+    }
+
+    // Check if data exists in locations before inserting
+    const countLocationResult = await db.getFirstAsync(`SELECT COUNT(*) as count FROM locations`);
+    if (countLocationResult.count === 0) {
+      await db.execAsync(`
+        INSERT INTO locations (locationName, indoor) VALUES 
+          ('Living Room', 1),
+          ('Bedroom', 1),
+          ('Kitchen', 1),
+          ('Bathroom', 1),
+          ('Office', 1),
+          ('Patio', 0),
+          ('Garden Bed 1', 0),
+          ('Front Porch', 0);
+      `);
     } 
 
      // Check if data exists in plants before inserting
-    const countPlantResult = await db.getFirstAsync(`SELECT COUNT(*) as count FROM plants`);
-    console.log("Existing record count:", countPlantResult.count)
-    if (countPlantResult.count === 0) {
-      console.log("No records found, inserting initial data");
-      await db.execAsync(`
-        INSERT INTO plants (Nickname, speciesID, indoor) VALUES ('Patrick', 1, 1);
-        INSERT INTO plants (Nickname, speciesID, indoor) VALUES ('Lucy', 2, 0);
-        INSERT INTO plants (Nickname, speciesID, indoor) VALUES ('Fernise', 3, 1);
-      `);
-     
-      const afterInsertPlantCount = await db.getFirstAsync("SELECT COUNT(*) as count FROM plants;");
-      console.log("After insert count:", afterInsertPlantCount.count);
-    } else {
-      console.log("Records already exist, skipping initial insert");
-    }   
-   
-    // Check if data exists in locations before inserting
-    const countLocationResult = await db.getFirstAsync(`SELECT COUNT(*) as count FROM locations`);
-    console.log("Existing record count:", countLocationResult.count)
-    if (countLocationResult.count === 0) {
-      console.log("No records found, inserting initial data");
-      await db.execAsync(`
-        INSERT INTO locations (locationName) VALUES ('Living Room');
-        INSERT INTO locations (locationName) VALUES ('Bedroom');
-        INSERT INTO locations (locationName) VALUES ('Kitchen');
-      `);
-     
-      const afterInsertLocationCount = await db.getFirstAsync("SELECT COUNT(*) as count FROM locations;");
-      console.log("After insert count:", afterInsertLocationCount.count);
-    }
-    else {  
-      console.log("Records already exist, skipping initial insert");
-    } 
+     const countPlantResult = await db.getFirstAsync(`SELECT COUNT(*) as count FROM plants`);
+     if (countPlantResult.count === 0) {
+       await db.execAsync(`
+         INSERT INTO plants (Nickname, speciesID, locationID, indoor)
+         SELECT 'Patrick', 
+           (SELECT speciesID FROM species WHERE commonName = 'Snake Plant'),
+           (SELECT locationID FROM locations WHERE locationName = 'Living Room'),
+           1;
+ 
+         INSERT INTO plants (Nickname, speciesID, locationID, indoor)
+         SELECT 'Lucy',
+           (SELECT speciesID FROM species WHERE commonName = 'Hosta'),
+           (SELECT locationID FROM locations WHERE locationName = 'Garden Bed 1'),
+           0;
+ 
+         INSERT INTO plants (Nickname, speciesID, locationID, indoor)
+         SELECT 'Fernise',
+           (SELECT speciesID FROM species WHERE commonName = 'Boston Fern'),
+           (SELECT locationID FROM locations WHERE locationName = 'Kitchen'),
+           1;
+       `);
+     }   
+              
     return true;
   } catch (error) {
     console.error('Database setup error:', error);
+    return false;
+  }
+};
+
+export const resetDatabase = async () => {
+  try {
+    // Close existing connection
+    if (db) {
+      await db.closeAsync();
+      db = null;
+    }
+    
+    // Delete database file
+    await FileSystem.deleteAsync(
+      FileSystem.documentDirectory + 'SQLite/' + dbName,
+      { idempotent: true }
+    );
+    
+    // Reinitialize database
+    return await setupDatabase();
+  } catch (error) {
+    console.error('Error resetting database:', error);
+    return false;
+  }
+};
+
+export const cleanupDuplicatePlants = async () => {
+  try {
+    const db = await getDatabase();
+    await db.execAsync(`
+      DELETE FROM plants 
+      WHERE plantID NOT IN (
+        SELECT MIN(plantID)
+        FROM plants
+        GROUP BY Nickname, speciesID, locationID
+      );
+    `);
+    return true;
+  } catch (error) {
+    console.error('Error cleaning up duplicate plants:', error);
     return false;
   }
 };
@@ -123,33 +219,19 @@ export const getIndoorSpecies = async () => {
 export const getIndoorPlants = async () => {
   try {
     const db = await getDatabase();
-    
-    // Join plants with species to get the common name
-    const plants = await db.getAllAsync(`
+    const results = await db.getAllAsync(`
       SELECT 
-        plants.plantID as id, 
-        plants.Nickname, 
-        plants.speciesID, 
-        plants.indoor,
-        species.commonName,
-        species.family
+        plants.*,
+        species.commonName as speciesName,
+        locations.locationName
       FROM plants
-      JOIN species ON plants.speciesID = species.speciesID
+      LEFT JOIN species ON plants.speciesID = species.speciesID
+      LEFT JOIN locations ON plants.locationID = locations.locationID
       WHERE plants.indoor = 1
-      ORDER BY plants.plantID
+      ORDER BY plants.plantID DESC
     `);
-    
-    console.log('Fetched indoor plants:', plants);
-    return plants.map((plant: { id: any; Nickname: any; speciesID: any; indoor: any; commonName: any; family: any; }) => ({
-      id: plant.id,
-      Nickname: plant.Nickname,
-      speciesID: plant.speciesID,
-      indoor: plant.indoor,
-      species: {
-        commonName: plant.commonName,
-        family: plant.family
-      }
-    }));
+    console.log("Fetched indoor plants:", results);
+    return results || [];
   } catch (error) {
     console.error('Error fetching indoor plants:', error);
     return [];
@@ -171,33 +253,19 @@ export const getOutdoorSpecies = async () => {
 export const getOutdoorPlants = async () => {
   try {
     const db = await getDatabase();
-    
-    // Join plants with species to get the common name
-    const plants = await db.getAllAsync(`
+    const results = await db.getAllAsync(`
       SELECT 
-        plants.plantID as id, 
-        plants.Nickname, 
-        plants.speciesID, 
-        plants.indoor,
-        species.commonName,
-        species.family
+        plants.*,
+        species.commonName as speciesName,
+        locations.locationName
       FROM plants
-      JOIN species ON plants.speciesID = species.speciesID
+      LEFT JOIN species ON plants.speciesID = species.speciesID
+      LEFT JOIN locations ON plants.locationID = locations.locationID
       WHERE plants.indoor = 0
-      ORDER BY plants.plantID
+      ORDER BY plants.plantID DESC
     `);
-    
-    console.log('Fetched outdoor plants:', plants);
-    return plants.map((plant: { id: any; Nickname: any; speciesID: any; indoor: any; commonName: any; family: any; }) => ({
-      id: plant.id,
-      Nickname: plant.Nickname,
-      speciesID: plant.speciesID,
-      indoor: plant.indoor,
-      species: {
-        commonName: plant.commonName,
-        family: plant.family
-      }
-    }));
+    console.log("Fetched outdoor plants:", results);
+    return results || [];
   } catch (error) {
     console.error('Error fetching outdoor plants:', error);
     return [];
@@ -218,20 +286,30 @@ export const getAllSpecies = async () => {
 export const getAllPlants = async () => {
   try {
     const db = await getDatabase();
-    const results = await db.getAllAsync('SELECT * FROM plants');
-    return results;
+    const results = await db.getAllAsync(`
+      SELECT 
+        plants.*,
+        species.commonName as speciesName,
+        locations.locationName
+      FROM plants
+      LEFT JOIN species ON plants.speciesID = species.speciesID
+      LEFT JOIN locations ON plants.locationID = locations.locationID
+      WHERE plants.indoor = 0
+    `);
+    console.log("Fetched outdoor plants:", results);
+    return results || [];
   } catch (error) {
-    console.error('Error fetching plants:', error);
+    console.error('Error fetching outdoor plants:', error);
     return [];
   }
 };
 
-export const addSpecies = async (commonName : string, family : string, indoor : number) => {
+export const addSpecies = async (commonName : string, indoor : number) => {
   try {
     const db = await getDatabase();
     await db.runAsync(
-      'INSERT INTO species (commonName, family, indoor) VALUES (?, ?, ?)',
-      [commonName, family, indoor ? 1 : 0]
+      'INSERT INTO species (commonName, indoor) VALUES (?, ?)',
+      [commonName, indoor ? 1 : 0]
     );
     return true;
   } catch (error) {
@@ -244,7 +322,7 @@ export const addPlant = async (Nickname : string, speciesID : number , indoor : 
   try {
     const db = await getDatabase();
     await db.runAsync(
-      'INSERT INTO plants (Nickname, speciesID, indoor) VALUES (?, ?, ?, ?)',
+      'INSERT INTO plants (Nickname, speciesID, indoor, locationID ) VALUES (?, ?, ?, ?)',
       [Nickname, speciesID, indoor ? 1 : 0, locationID]
     );
     return true;
@@ -254,11 +332,19 @@ export const addPlant = async (Nickname : string, speciesID : number , indoor : 
   }
 };
 
-export const getPlantById = async (id: string | number | boolean | Uint8Array<ArrayBufferLike> | null) => {
+export const getPlantById = async ( plantID: number ) => {
   try {
     const db = await getDatabase();
-    const plant = await db.getFirstAsync('SELECT * FROM plants WHERE id = ?', [id]);
-    return plant || null;
+    return await db.getFirstAsync(`
+      SELECT 
+        plants.*,
+        species.commonName as speciesName,
+        locations.locationName
+      FROM plants
+      LEFT JOIN species ON plants.speciesID = species.speciesID
+      LEFT JOIN locations ON plants.locationID = locations.locationID
+      WHERE plants.plantID = ?
+    `, [plantID]);
   }
   catch (error) {
     console.error('Error fetching plant by ID:', error);
@@ -273,17 +359,6 @@ export const getPlantById = async (id: string | number | boolean | Uint8Array<Ar
 //     return true;
 //   } catch (error) {
 //     console.error('Error deleting species:', error);
-//     return false;
-//   }
-//};
-
-// export const deletePlants = async (id) => {
-//   try {
-//     const db = await getDatabase();
-//     await db.runAsync('DELETE FROM plants WHERE id = ?', [id]);
-//     return true;
-//   } catch (error) {
-//     console.error('Error deleting plants:', error);
 //     return false;
 //   }
 //};

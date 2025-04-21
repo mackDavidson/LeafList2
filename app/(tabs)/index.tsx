@@ -1,21 +1,18 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Text, View, StyleSheet, FlatList, TouchableOpacity, Alert } from "react-native";
-import { setupDatabase, getIndoorPlants } from '../dbFuncs';
+import { setupDatabase, getIndoorPlants, resetDatabase, cleanupDuplicatePlants } from '../dbFuncs';
 import { useRouter, useFocusEffect } from "expo-router";
 
 export default function indoor() {
   // Defining types for the data
-  type Species = {
-    commonName: string;
-    family: string;
-  };
   
   type Plant = {
     plantID: number;
     Nickname: string;
     speciesID: number;
     indoor: number;
-    species: Species;
+    speciesName: string;
+    locationName: string;
   };
 
   const router = useRouter();
@@ -25,17 +22,9 @@ export default function indoor() {
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      await setupDatabase();
       const data = await getIndoorPlants();
       console.log("Indoor plants:", data);
-      const transformedData = data.map((item: any) => ({
-        plantID: item.id,
-        Nickname: item.Nickname,
-        speciesID: item.speciesID,
-        indoor: item.indoor,
-        species: item.species,
-      }));
-      setPlants(transformedData);
+      setPlants(data);
     } catch (error) {
       console.error("Database error:", error);
       Alert.alert('Error', 'Failed to load data: ' + error);
@@ -44,19 +33,11 @@ export default function indoor() {
     }
   }, []);
 
-  // Initial database setup
-  useEffect(() => {
-    loadData();
-  }, []);
-
   // Reload data whenever the screen comes into focus
   useFocusEffect(
     useCallback(() => {
       console.log("Indoor screen in focus - reloading data");
       loadData();
-      return () => {
-        // Optional cleanup if needed
-      };
     }, [loadData])
   );
 
@@ -66,8 +47,49 @@ export default function indoor() {
  
   //function to handle navigating to plant profile
   const navigateToPlantProfile = (plantID: number) => {
-      // Navigate to the plant profile screen with the species ID
-      router.push(`../plantProfile/${plantID}`);
+      // Navigate to the plant profile screen with the plant ID
+      router.push(`../profiles/plantProfile/${plantID}`);
+  };
+
+  const handleResetDatabase = async () => {
+    try {
+      const confirmed = await new Promise((resolve) => {
+        Alert.alert(
+          'Reset Database',
+          'This will delete ALL data. Are you sure?',
+          [
+            { text: 'Cancel', onPress: () => resolve(false), style: 'cancel' },
+            { text: 'Reset', onPress: () => resolve(true), style: 'destructive' }
+          ]
+        );
+      });
+  
+      if (confirmed) {
+        setLoading(true);
+        await resetDatabase();
+        await loadData(); // Reload data after reset
+        Alert.alert('Success', 'Database has been reset');
+      }
+    } catch (error) {
+      console.error('Reset error:', error);
+      Alert.alert('Error', 'Failed to reset database');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCleanupDuplicates = async () => {
+    try {
+      setLoading(true);
+      await cleanupDuplicatePlants();
+      await loadData(); // Reload data after cleanup
+      Alert.alert('Success', 'Duplicate plants have been removed');
+    } catch (error) {
+      console.error('Cleanup error:', error);
+      Alert.alert('Error', 'Failed to clean up duplicates');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // const navigateToPlantProfile = () => {
@@ -116,7 +138,7 @@ export default function indoor() {
             >                 
               <View style={styles.plantContent}>
                 <Text style={styles.nicknameBadge}>{item.Nickname}</Text>
-                <Text style={styles.speciesName}>{item.species.commonName}</Text>
+                <Text style={styles.speciesName}>{item.speciesName || 'Unknown Species'}</Text>
               </View>
               <View style={styles.chevron}>
                 <Text style={styles.chevronText}>›</Text>
@@ -157,6 +179,9 @@ export const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 8,
   },
+  dangerButton: {
+    backgroundColor: '#d32f2f', // Red color for dangerous actions
+  },
   panelButton: {
     flex: 1,
     backgroundColor: '#4CAF50', // Vibrant green
@@ -179,14 +204,12 @@ export const styles = StyleSheet.create({
     flexGrow: 1,
   },
   listContentContainer: {
-    paddingVertical: 0, // Remove any default padding from the FlatList content
+    paddingVertical: 0, 
   },
-  // Use an item separator instead of margins
   itemSeparator: {
     height: 2, // Explicit spacing in pixels
-    backgroundColor: 'transparent', // Make it invisible
+    backgroundColor: 'transparent', 
   },
-  // Plant Item with margin removed
   plantItem: {
     backgroundColor: '#A5D6A7', // Soft green
     borderRadius: 10,

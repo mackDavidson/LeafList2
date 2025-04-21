@@ -35,7 +35,7 @@ export default function AddPlantPop() {
         }
        
         try {
-            // Call the addPlants function with individual parameters
+            // Adding plant to the database
             const success = await addPlant(
                 Nickname.trim(),
                 speciesID,

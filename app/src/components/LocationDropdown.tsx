@@ -20,15 +20,15 @@ const LocationDropdown = ({ onLocationSelect }: { onLocationSelect: (locationId:
           console.log('Database object:', db);
 
           // Use getAllAsync to fetch locations
-          const locations = await db.getAllAsync('SELECT locationsID, locationName FROM locations ORDER BY locationName ASC');
+          const locations = await db.getAllAsync('SELECT locationID, locationName FROM locations ORDER BY locationName ASC') as { locationID: number; locationName: string }[];
           console.log('Raw location query results:', locations);
-
+          
           // Transform location data for dropdown
-            const locationData: { label: string; value: number }[] = 
-              locations.map((locations: { locationID: number; locationName: string }) => ({
-              label: locations.locationName,
-              value: locations.locationID
-              }));
+          const locationData: { label: string; value: number }[] = 
+            locations.map((location) => ({
+            label: location.locationName,
+            value: location.locationID
+          }));
             console.log('Transformed location data:', locationData);
           
           setLocationList(locationData);

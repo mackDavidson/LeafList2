@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { getDatabase, getPlantById } from './dbFuncs';
+import { getDatabase, getPlantById} from '../dbFuncs';
 
 export default function PlantProfileScreen() {
   const router = useRouter();
