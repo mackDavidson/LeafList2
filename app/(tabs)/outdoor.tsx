@@ -2,6 +2,7 @@ import {useState, useEffect, useCallback} from 'react';
 import { Text, View, StyleSheet, FlatList, TouchableOpacity, Alert } from "react-native";
 import { setupDatabase, getOutdoorPlants } from '../dbFuncs';
 import { useRouter, useFocusEffect } from "expo-router";
+import PlantItem from '../src/components/PlantItem';
 
 export default function outdoor() {
 
@@ -12,6 +13,9 @@ export default function outdoor() {
     indoor: number;
     speciesName: string;
     locationName: string;
+    dateAcquired: string | null;
+    lastWatered: string | null;
+    lastFertilized: string | null;
   };
    
   const router = useRouter();
@@ -40,12 +44,6 @@ export default function outdoor() {
     }, [loadData])
   );
    
-  // function to handle navigating to plant profile
-  const navigateToPlantProfile = (plantID: number) => {
-    // Navigate to the plant profile screen with the species ID
-    router.push(`../profile/plantProfile/${plantID}`);
-  };
-
   if (loading) {
     return <View style={styles.container}><Text>Loading database...</Text></View>;
   }
@@ -80,24 +78,7 @@ return (
           contentContainerStyle={styles.listContentContainer}
           data={plants}
           renderItem={({item}) => (
-            <TouchableOpacity 
-              style={styles.plantItem} 
-              onPress={() => {
-                if (item.plantID) {
-                  navigateToPlantProfile(item.plantID);
-                } else {
-                  Alert.alert('Error', 'Plant ID is missing.');
-                }
-              }}
-            >                 
-              <View style={styles.plantContent}>
-                <Text style={styles.nicknameBadge}>{item.Nickname}</Text>
-                <Text style={styles.speciesName}>{item.speciesName || "Unknown Species"}</Text>
-              </View>
-              <View style={styles.chevron}>
-                <Text style={styles.chevronText}>›</Text>
-              </View>
-            </TouchableOpacity>
+            <PlantItem item={item} />
           )}
           keyExtractor={(item) => item.plantID?.toString() || Math.random().toString()}
           ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}

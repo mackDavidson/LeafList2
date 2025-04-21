@@ -25,17 +25,17 @@ export const setupDatabase = async () => {
     `);
     console.log('Existing tables:', existingTables.map(t => t.name));
 
-      // await db.execAsync(`
-      //   PRAGMA foreign_keys = OFF;       
-      //   DROP TABLE IF EXISTS plants;
-      //   DROP TABLE IF EXISTS plantLogs;
-      //   DROP TABLE IF EXISTS plantImages;
-      //   DROP TABLE IF EXISTS species;
-      //   DROP TABLE IF EXISTS locations;
-      //   PRAGMA foreign_keys = ON;
-      // `);
+      await db.execAsync(`
+        PRAGMA foreign_keys = OFF;       
+        DROP TABLE IF EXISTS plants;
+        DROP TABLE IF EXISTS plantLogs;
+        DROP TABLE IF EXISTS plantImages;
+        DROP TABLE IF EXISTS species;
+        DROP TABLE IF EXISTS locations;
+        PRAGMA foreign_keys = ON;
+      `);
 
-      //console.log('Existing tables:', existingTables.map(t => t.name));      
+      console.log('Existing tables:', existingTables.map(t => t.name));      
 
     // Create tables if they doesn't exist
     await db.execAsync(`
@@ -77,6 +77,9 @@ export const setupDatabase = async () => {
        dateAcquired TEXT NULL,
        lastFertilized TEXT NULL, 
        lastWatered TEXT NULL,
+       soilType TEXT NULL,
+       sunlightPreferences TEXT NULL,
+       temperature TEXT NULL,
        UNIQUE(Nickname, speciesID, locationID) ON CONFLICT ABORT,
        FOREIGN KEY (speciesID) REFERENCES species(speciesID) ON DELETE CASCADE,
        FOREIGN KEY (locationID) REFERENCES locations(locationID) ON DELETE CASCADE,
@@ -335,7 +338,7 @@ export const addPlant = async (Nickname : string, speciesID : number , indoor : 
 export const getPlantById = async ( plantID: number ) => {
   try {
     const db = await getDatabase();
-    return await db.getFirstAsync(`
+    const result = await db.getFirstAsync(`
       SELECT 
         plants.*,
         species.commonName as speciesName,
@@ -345,10 +348,40 @@ export const getPlantById = async ( plantID: number ) => {
       LEFT JOIN locations ON plants.locationID = locations.locationID
       WHERE plants.plantID = ?
     `, [plantID]);
-  }
-  catch (error) {
+    
+    return result || null;
+  } catch (error) {
     console.error('Error fetching plant by ID:', error);
-    return null;
+    throw error;
+  }
+};
+
+export const updatePlant = async (plantData: any) => {
+  try {
+    const db = await getDatabase();
+    await db.runAsync(`
+      UPDATE plants
+      SET 
+        Nickname = ?,
+        soilType = ?,
+        temperature = ?,
+        sunlightPreferences = ?,
+        locationID = ?,
+        speciesID = ?
+      WHERE plantID = ?
+    `, [
+      plantData.Nickname,
+      plantData.soilType,
+      plantData.temperature,
+      plantData.sunlightPreferences,
+      plantData.locationID,
+      plantData.speciesID,
+      plantData.plantID
+    ]);
+    console.log('Plant updated successfully.');
+  } catch (error) {
+    console.error('Error updating plant:', error);
+    throw error;
   }
 };
 

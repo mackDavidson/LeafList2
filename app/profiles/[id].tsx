@@ -2,14 +2,29 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { getDatabase, getPlantById} from '../dbFuncs';
+import { getPlantById} from '../dbFuncs';
 
 export default function PlantProfileScreen() {
+  type Plant = {
+    plantID: number;
+    Nickname: string;
+    speciesID: number;
+    indoor: number;
+    speciesName: string;
+    locationName: string;
+    dateAcquired: string | null;
+    lastWatered: string | null;
+    lastFertilized: string | null;
+  };
+
   const router = useRouter();
+
+  // Get the plant ID from the URL parameters which is a string by default
   const { id } = useLocalSearchParams<{ id: string }>();
-  const plantID = Number(id);
+  const plantID = parseInt(id);
+  console.log('Profile page received ID: ', plantID);
   
-  const [plant, setPlant] = useState<{ Nickname: string; Location?: string; Species: string } | null>(null);
+  const [plant, setPlant] = useState<Plant | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -18,15 +33,10 @@ export default function PlantProfileScreen() {
     async function loadPlantData() {
       try {
         setLoading(true);
-        const db = await getDatabase();
-        const plantData = await db.getPlantById(plantID); // Fix this function
+        const plantData = await getPlantById(plantID);
         
-        if (plantData) {
-          setPlant({
-            Nickname: plantData.Nickname,
-            Location: plantData.Location,
-            Species: plantData.Species,
-          });
+        if (plantData && typeof plantData === 'object' && plantData.plantID === plantID) {
+          setPlant(plantData as Plant);
         } else {
           Alert.alert('Error', 'Plant not found.' + error);
         }
@@ -42,11 +52,19 @@ export default function PlantProfileScreen() {
   }, [plantID]);
 
   const handleEdit = () => {
-    // Navigate to edit screen with plant data
-    router.push({
-      pathname: '/editPlantProfile',
-      //params: { plantID, initialData: JSON.stringify(plant) }
-    });
+    console.log('Edit button pressed');
+    if (plant) {
+      console.log('Plant data available:', plant);
+      router.push({
+        pathname: '/editPlantProfile',
+        params: { 
+          plantID: plant.plantID,
+          initialData: JSON.stringify(plant) // Pass plant data as a JSON string
+        }
+      });
+    } else {
+      Alert.alert('Error', 'Plant data not available for editing.');
+    }
   };
 
   if (loading) {
@@ -87,7 +105,7 @@ export default function PlantProfileScreen() {
         <View style={styles.detailContainer}>
           <View style={styles.detailLabelContainer}>
             <Text style={styles.detailLabel}>Nickname</Text>
-            <TouchableOpacity onPress={() => handleEdit}>
+            <TouchableOpacity onPress={() => handleEdit()}>
               <Feather name="edit-2" size={20} color="#2E7D32" />
             </TouchableOpacity>
           </View>
@@ -100,12 +118,9 @@ export default function PlantProfileScreen() {
         <View style={styles.detailContainer}>
           <View style={styles.detailLabelContainer}>
             <Text style={styles.detailLabel}>Species</Text>
-            <TouchableOpacity>
-              <Feather name="edit-2" size={20} color="#2E7D32" />
-            </TouchableOpacity>
           </View>
           <View style={styles.detailValueContainer}>
-            <Text style={styles.detailValue}>{plant?.Species || 'Not found'}</Text>
+            <Text style={styles.detailValue}>{plant?.speciesName || 'Not found'}</Text>
           </View>
         </View>
 
@@ -115,7 +130,7 @@ export default function PlantProfileScreen() {
             <Text style={styles.detailLabel}>Location</Text>
           </View>
           <View style={styles.detailValueContainer}>
-            <Text style={styles.detailValue}>{plant?.Location || 'Not Specified'}</Text>
+            <Text style={styles.detailValue}>{plant?.locationName || 'Not Specified'}</Text>
           </View>
         </View>
 
@@ -123,9 +138,6 @@ export default function PlantProfileScreen() {
         <View style={styles.detailContainer}>
           <View style={styles.detailLabelContainer}>
             <Text style={styles.detailLabel}>Soil Type</Text>
-            <TouchableOpacity>
-              <Feather name="edit-2" size={20} color="#2E7D32" />
-            </TouchableOpacity>
           </View>
           <View style={styles.detailValueContainer}>
             <Text style={styles.detailValue}>Peat-based Potting Mix</Text>
@@ -136,9 +148,6 @@ export default function PlantProfileScreen() {
         <View style={styles.detailContainer}>
           <View style={styles.detailLabelContainer}>
             <Text style={styles.detailLabel}>Temperature</Text>
-            <TouchableOpacity>
-              <Feather name="edit-2" size={20} color="#2E7D32" />
-            </TouchableOpacity>
           </View>
           <View style={styles.detailValueContainer}>
             <Text style={styles.detailValue}>60-75°F (15-24°C)</Text>
@@ -149,9 +158,6 @@ export default function PlantProfileScreen() {
         <View style={styles.detailContainer}>
           <View style={styles.detailLabelContainer}>
             <Text style={styles.detailLabel}>Sunlight Preferences</Text>
-            <TouchableOpacity>
-              <Feather name="edit-2" size={20} color="#2E7D32" />
-            </TouchableOpacity>
           </View>
           <View style={styles.detailValueContainer}>
             <Text style={styles.detailValue}>Indirect, Bright Light</Text>
