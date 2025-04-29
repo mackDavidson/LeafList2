@@ -1,5 +1,5 @@
-import {useState, useEffect, useCallback} from 'react';
-import { Text, View, StyleSheet, FlatList, TouchableOpacity, Alert } from "react-native";
+import {useState, useCallback} from 'react';
+import { Text, View, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import { getOutdoorPlants } from '../dbFuncs';
 import { useRouter, useFocusEffect } from "expo-router";
 import PlantItem from '../src/components/PlantItem';

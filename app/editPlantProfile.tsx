@@ -12,6 +12,7 @@ export default function editPlantProfile() {
 
   // Initialize state with plant data
   const [nickname, setNickname] = useState(plant ? plant.Nickname : '');
+  const [lastWatered, setLastWatered] = useState(plant ? plant.lastWatered : null);
   const [soilType, setSoilType] = useState(plant ? 'Peat-based Potting Mix' : ''); 
   const [temperature, setTemperature] = useState(plant ? '60-75°F (15-24°C)' : '');
   const [sunlightPreferences, setSunlightPreferences] = useState(plant ? 'Indirect, Bright Light' : ''); 
@@ -26,6 +27,7 @@ export default function editPlantProfile() {
       setSunlightPreferences('Indirect, Bright Light'); 
       setLocationID(plant.locationID);
       setSpeciesID(plant.speciesID);
+      setLastWatered(plant.lastWatered);
     }
   }, []);
 
@@ -35,6 +37,7 @@ export default function editPlantProfile() {
       const updatedPlantData = {
         plantID: plant.plantID,
         Nickname: nickname,
+        lastWatered: lastWatered,
         soilType: soilType,
         temperature: temperature,
         sunlightPreferences: sunlightPreferences,
@@ -106,6 +109,20 @@ export default function editPlantProfile() {
               <LocationDropdown
                 onLocationSelect={(locationId: number) => setLocationID(locationId)}
                 />
+            </View>
+          </View>
+            
+            {/* Last Watered */}
+          <View style={styles.detailContainer}>
+            <View style={styles.detailLabelContainer}>
+              <Text style={styles.detailLabel}>Last Watered</Text>
+            </View>
+            <View style={styles.detailValueContainer}>
+              <TextInput
+                style={styles.detailValue}
+                value={lastWatered}
+                onChangeText={(text) => setLastWatered(text)}
+              />
             </View>
           </View>
 

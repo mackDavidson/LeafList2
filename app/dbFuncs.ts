@@ -35,7 +35,7 @@ export const setupDatabase = async () => {
       //   PRAGMA foreign_keys = ON;
       // `);
 
-      //console.log('Existing tables:', existingTables.map(t => t.name));      
+      // console.log('Existing tables:', existingTables.map(t => t.name));      
 
     // Create tables if they doesn't exist
     await db.execAsync(`
@@ -382,7 +382,8 @@ export const updatePlant = async (plantData: any) => {
         temperature = ?,
         sunlightPreferences = ?,
         locationID = ?,
-        speciesID = ?
+        speciesID = ?,
+        lastWatered = ?
       WHERE plantID = ?
     `, [
       plantData.Nickname,
@@ -391,6 +392,7 @@ export const updatePlant = async (plantData: any) => {
       plantData.sunlightPreferences,
       plantData.locationID,
       plantData.speciesID,
+      plantData.lastWatered,
       plantData.plantID
     ]);
     console.log('Plant updated successfully.');
@@ -400,13 +402,30 @@ export const updatePlant = async (plantData: any) => {
   }
 };
 
-// export const deleteSpecies = async (id) => {
+// ***FUNCTION IN PROGRESS***
+export const addPlantLog = async (plantID: number, logDate: string, notes: string) => {
+  try {
+    const db = await getDatabase();
+    await db.runAsync(
+      'INSERT INTO plantLogs (plantID, logDate, notes) VALUES (?, ?, ?)',
+      [plantID, logDate, notes]
+    );
+    return true;
+  } catch (error) {
+    console.error('Error adding plant log:', error);
+    return false;
+  }
+};
+
+// ***FUNCTION IN PROGRESS***
+// export const deletePlant = async (plantID: number) => {
 //   try {
 //     const db = await getDatabase();
-//     await db.runAsync('DELETE FROM species WHERE id = ?', [id]);
+//     await db.runAsync('DELETE FROM plants WHERE plantID = ?', [plantID]);
 //     return true;
 //   } catch (error) {
-//     console.error('Error deleting species:', error);
+//     console.error('Error deleting plant:', error);
 //     return false;
 //   }
-//};
+// };
+

@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Text, View, StyleSheet, FlatList, TouchableOpacity, Alert } from "react-native";
-import { setupDatabase, getIndoorPlants, resetDatabase, cleanupDuplicatePlants } from '../dbFuncs';
+import { useState, useCallback } from 'react';
+import { Text, View, StyleSheet, TouchableOpacity, Alert } from "react-native";
+import { getIndoorPlants, resetDatabase, cleanupDuplicatePlants, setupDatabase } from '../dbFuncs';
 import { useRouter, useFocusEffect } from "expo-router";
 import { FlashList } from '@shopify/flash-list';
+import { SwipeListView } from 'react-native-swipe-list-view';
 import PlantItem from '../src/components/PlantItem';
 
 export default function indoor() {
@@ -14,6 +15,7 @@ export default function indoor() {
     indoor: number;
     speciesName: string;
     locationName: string;
+    logID: number | null;
     dateAcquired: string | null;
     lastWatered: string | null;
     lastFertilized: string | null;
@@ -26,6 +28,8 @@ export default function indoor() {
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
+      // Uncomment the next line if you want to set up the database 
+      // setupDatabase();
       const data = await getIndoorPlants();
       console.log("Indoor plants:", data);
       setPlants(data);
@@ -44,7 +48,7 @@ export default function indoor() {
       loadData();
     }, [loadData])
   );
-
+  // Rendering custom plant item component
   const renderItem = useCallback(({ item }) => (
     <PlantItem item={item} />
   ), []);
@@ -54,47 +58,96 @@ export default function indoor() {
   if (loading) {
     return <View style={styles.container}><Text>Loading database...</Text></View>;
   }
- 
-  const handleResetDatabase = async () => {
-    try {
-      const confirmed = await new Promise((resolve) => {
-        Alert.alert(
-          'Reset Database',
-          'This will delete ALL data. Are you sure?',
-          [
-            { text: 'Cancel', onPress: () => resolve(false), style: 'cancel' },
-            { text: 'Reset', onPress: () => resolve(true), style: 'destructive' }
-          ]
-        );
-      });
-  
-      if (confirmed) {
-        setLoading(true);
-        await resetDatabase();
-        await loadData(); // Reload data after reset
-        Alert.alert('Success', 'Database has been reset');
-      }
-    } catch (error) {
-      console.error('Reset error:', error);
-      Alert.alert('Error', 'Failed to reset database');
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const handleCleanupDuplicates = async () => {
-    try {
-      setLoading(true);
-      await cleanupDuplicatePlants();
-      await loadData(); // Reload data after cleanup
-      Alert.alert('Success', 'Duplicate plants have been removed');
-    } catch (error) {
-      console.error('Cleanup error:', error);
-      Alert.alert('Error', 'Failed to clean up duplicates');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // ***WORK IN PROGRESS*** Beginning of swipe list function to delete a row/plant 
+  // const deleteRow = async (rowMap, plantID) => {
+  //   if (rowMap[plantID]) {
+  //     rowMap[plantID].closeRow();
+  //   }
+  //   const newData = [...plants];
+  //   const prevIndex = plants.findIndex(item => item.plantID === plantID);
+  //   newData.splice(prevIndex, 1);
+  //   setPlants(newData);
+  //   // Delete from database
+  //   try {
+  //     setLoading(true);
+  //     await deletePlant(plantID);
+  //     Alert.alert('Success', 'Plant has been deleted');
+  //   } catch (error) {
+  //     console.error('Delete error:', error);
+  //     Alert.alert('Error', 'Failed to delete plant');
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+  
+  // const closeRow = (rowMap, plantID) => {
+  //   if (rowMap[plantID]) {
+  //     rowMap[plantID].closeRow();
+  //   }
+  // };
+
+  // ***FUNCTION TO DELETE A ROW/PLANT - WORK IN PROGRESS***
+  // const renderHiddenItem = useCallback(
+  //   (data, rowMap) => (
+  //     <View style={styles.rowBack}>
+  //       <TouchableOpacity
+  //         style={[styles.backRightBtn, styles.backRightBtnLeft]}
+  //         onPress={() => closeRow(rowMap, data.item.plantID)}
+  //       >
+  //         <Text style={styles.backTextWhite}>Close</Text>
+  //       </TouchableOpacity>
+  //       <TouchableOpacity
+  //         style={[styles.backRightBtn, styles.backRightBtnRight]}
+  //         onPress={() => deleteRow(rowMap, data.item.plantID)}
+  //       >
+  //         <Text style={styles.backTextWhite}>Delete</Text>
+  //       </TouchableOpacity>
+  //     </View>
+  //   ),
+  //   []
+  // );
+ 
+  // const handleResetDatabase = async () => {
+  //   try {
+  //     const confirmed = await new Promise((resolve) => {
+  //       Alert.alert(
+  //         'Reset Database',
+  //         'This will delete ALL data. Are you sure?',
+  //         [
+  //           { text: 'Cancel', onPress: () => resolve(false), style: 'cancel' },
+  //           { text: 'Reset', onPress: () => resolve(true), style: 'destructive' }
+  //         ]
+  //       );
+  //     });
+  
+  //     if (confirmed) {
+  //       setLoading(true);
+  //       await resetDatabase();
+  //       await loadData(); // Reload data after reset
+  //       Alert.alert('Success', 'Database has been reset');
+  //     }
+  //   } catch (error) {
+  //     console.error('Reset error:', error);
+  //     Alert.alert('Error', 'Failed to reset database');
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+  // const handleCleanupDuplicates = async () => {
+  //   try {
+  //     setLoading(true);
+  //     await cleanupDuplicatePlants();
+  //     await loadData(); // Reload data after cleanup
+  //     Alert.alert('Success', 'Duplicate plants have been removed');
+  //   } catch (error) {
+  //     console.error('Cleanup error:', error);
+  //     Alert.alert('Error', 'Failed to clean up duplicates');
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   return (
     <View style={styles.container}>
@@ -135,6 +188,24 @@ export default function indoor() {
             </View>
           }
         />
+        {/* <SwipeListView ***MIGHT NOT BE NEEDED***
+          style={styles.plantList}
+          contentContainerStyle={styles.listContentContainer}
+          data={plants}
+          renderItem={renderItem}
+          renderHiddenItem={renderHiddenItem}
+          keyExtractor={keyExtractor}
+          estimatedItemSize={200}
+          ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
+          ListEmptyComponent={
+            <View style={styles.emptyList}>
+              <Text style={styles.emptyText}>No indoor plants found</Text>
+            </View>
+          }
+          leftOpenValue={75}
+          rightOpenValue={-75}
+          disableRightSwipe={true}
+        /> */}
     </View>
   );
 }
@@ -250,5 +321,32 @@ export const styles = StyleSheet.create({
     fontSize: 18,
     color: '#777',
     fontStyle: 'italic',
+  },
+  rowBack: {
+    alignItems: 'center',
+    backgroundColor: '#DDD',
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingLeft: 15,
+  },
+  backRightBtn: {
+    alignItems: 'center',
+    bottom: 0,
+    justifyContent: 'center',
+    position: 'absolute',
+    top: 0,
+    width: 75,
+  },
+  backRightBtnLeft: {
+    backgroundColor: 'blue',
+    right: 75,
+  },
+  backRightBtnRight: {
+    backgroundColor: 'red',
+    right: 0,
+  },
+  backTextWhite: {
+    color: '#FFF',
   },
 });

@@ -13,6 +13,7 @@ export default function PlantProfileScreen() {
     indoor: number;
     speciesName: string;
     locationName: string;
+    logID: number | null;
     dateAcquired: string | null;
     lastWatered: string | null;
     lastFertilized: string | null;
@@ -132,6 +133,16 @@ export default function PlantProfileScreen() {
           </View>
           <View style={styles.detailValueContainer}>
             <Text style={styles.detailValue}>{plant?.locationName || 'Not Specified'}</Text>
+          </View>
+        </View>
+
+        {/* Last Watered Date */}
+        <View style={styles.detailContainer}>
+          <View style={styles.detailLabelContainer}>
+            <Text style={styles.detailLabel}>Last Watered</Text>
+          </View>
+          <View style={styles.detailValueContainer}>
+            <Text style={styles.detailValue}>{plant?.lastWatered || 'Not Watered Yet'}</Text>
           </View>
         </View>
 
