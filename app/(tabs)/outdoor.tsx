@@ -3,6 +3,7 @@ import { Text, View, StyleSheet, FlatList, TouchableOpacity, Alert } from "react
 import { getOutdoorPlants } from '../dbFuncs';
 import { useRouter, useFocusEffect } from "expo-router";
 import PlantItem from '../src/components/PlantItem';
+import { FlashList } from '@shopify/flash-list';
 
 export default function outdoor() {
 
@@ -44,6 +45,12 @@ export default function outdoor() {
     }, [loadData])
   );
    
+  const renderItem = useCallback(({ item }) => (
+    <PlantItem item={item} />
+  ), []);
+
+  const keyExtractor = useCallback((item) => item.plantID?.toString() || Math.random().toString(), []);
+
   if (loading) {
     return <View style={styles.container}><Text>Loading database...</Text></View>;
   }
@@ -73,18 +80,17 @@ return (
           </TouchableOpacity>
         </View>
         
-        <FlatList
+        <FlashList
           style={styles.plantList}
           contentContainerStyle={styles.listContentContainer}
           data={plants}
-          renderItem={({item}) => (
-            <PlantItem item={item} />
-          )}
-          keyExtractor={(item) => item.plantID?.toString() || Math.random().toString()}
+          renderItem={renderItem}
+          keyExtractor={keyExtractor}
+          estimatedItemSize={200}
           ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
           ListEmptyComponent={
             <View style={styles.emptyList}>
-              <Text style={styles.emptyText}>No outdoor plants found</Text>
+              <Text style={styles.emptyText}>No indoor plants found</Text>
             </View>
           }
         />
@@ -96,31 +102,31 @@ export const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F5F5DC', // Light beige 
-    padding: 16,
+    padding: 12,
   },
   header: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#2E7D32', // Deep green
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: 14,
   },
   // Button Panel Styles
   buttonPanel: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    marginBottom: 14,
     backgroundColor: 'rgba(165, 214, 167, 0.3)', // Light green with transparency
-    borderRadius: 12,
-    padding: 8,
+    borderRadius: 10,
+    padding: 6,
   },
   panelButton: {
     flex: 1,
     backgroundColor: '#4CAF50', // Vibrant green
-    paddingVertical: 10,
-    borderRadius: 8,
+    paddingVertical: 8,
+    borderRadius: 6,
     alignItems: 'center',
-    marginHorizontal: 4,
+    marginHorizontal: 3,
     elevation: 2, 
     shadowColor: '#000', 
     shadowOffset: { width: 0, height: 1 },
@@ -144,7 +150,7 @@ export const styles = StyleSheet.create({
   },
   plantItem: {
     backgroundColor: '#A5D6A7', // Soft green
-    borderRadius: 10,
+    borderRadius: 8,
     marginVertical: 0, // Remove vertical margins
     flexDirection: 'row',
     alignItems: 'center',

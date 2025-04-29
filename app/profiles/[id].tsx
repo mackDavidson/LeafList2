@@ -3,6 +3,7 @@ import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert } from 'rea
 import { Feather } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { getPlantById} from '../dbFuncs';
+import ProfileBottomBar from '../src/components/ProfileBottomBar';
 
 export default function PlantProfileScreen() {
   type Plant = {
@@ -140,7 +141,7 @@ export default function PlantProfileScreen() {
             <Text style={styles.detailLabel}>Soil Type</Text>
           </View>
           <View style={styles.detailValueContainer}>
-            <Text style={styles.detailValue}>Peat-based Potting Mix</Text>
+            <Text style={styles.detailValue}>Potting Mix</Text>
           </View>
         </View>
 
@@ -164,6 +165,7 @@ export default function PlantProfileScreen() {
           </View>
         </View>
       </View>
+      <ProfileBottomBar plantID={plantID} activeRoute="profile" />
     </ScrollView>
   );
 };

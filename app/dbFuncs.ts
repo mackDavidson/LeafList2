@@ -25,17 +25,17 @@ export const setupDatabase = async () => {
     `);
     console.log('Existing tables:', existingTables.map(t => t.name));
 
-      await db.execAsync(`
-        PRAGMA foreign_keys = OFF;       
-        DROP TABLE IF EXISTS plants;
-        DROP TABLE IF EXISTS plantLogs;
-        DROP TABLE IF EXISTS plantImages;
-        DROP TABLE IF EXISTS species;
-        DROP TABLE IF EXISTS locations;
-        PRAGMA foreign_keys = ON;
-      `);
+      // await db.execAsync(`
+      //   PRAGMA foreign_keys = OFF;       
+      //   DROP TABLE IF EXISTS plants;
+      //   DROP TABLE IF EXISTS plantLogs;
+      //   DROP TABLE IF EXISTS plantImages;
+      //   DROP TABLE IF EXISTS species;
+      //   DROP TABLE IF EXISTS locations;
+      //   PRAGMA foreign_keys = ON;
+      // `);
 
-      console.log('Existing tables:', existingTables.map(t => t.name));      
+      //console.log('Existing tables:', existingTables.map(t => t.name));      
 
     // Create tables if they doesn't exist
     await db.execAsync(`

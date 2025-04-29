@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, View, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { Text, View, StyleSheet, TouchableOpacity, Alert, TextStyle } from 'react-native';
 import { useRouter } from 'expo-router';
 
 type Plant = {
@@ -17,7 +17,7 @@ type PlantItemProps = {
   item: Plant;
 };
 
-const PlantItem: React.FC<PlantItemProps> = ({ item }) => {
+const PlantItem: React.FC<PlantItemProps> = React.memo(({ item }) => {
   const router = useRouter();
 
   const navigateToPlantProfile = (plantID: number) => {
@@ -37,36 +37,48 @@ const PlantItem: React.FC<PlantItemProps> = ({ item }) => {
       }}
     >
       <View style={styles.plantContent}>
+      <View style={styles.profileImagePlaceholder} />
         <Text style={styles.nicknameBadge}>{item.Nickname}</Text>
-        <Text style={styles.speciesName}>{item.speciesName || 'Unknown Species'}</Text>
+        <Text style={[styles.speciesName, { ellipsizeMode: 'tail', numberOfLines: 1 } as TextStyle]}>
+          {item.speciesName || 'Unknown Species'}
+        </Text>
       </View>
       <View style={styles.chevron}>
         <Text style={styles.chevronText}>›</Text>
       </View>
     </TouchableOpacity>
   );
-};
+});
 
 const styles = StyleSheet.create({
   plantItem: {
     backgroundColor: '#A5D6A7', // Soft green
     borderRadius: 10,
-    marginVertical: 0, // Remove vertical margins
+    marginVertical: 0, 
     flexDirection: 'row',
     alignItems: 'center',
     overflow: 'hidden',
-    // Reduce shadow/elevation for less visual space
-    elevation: 1,
+    elevation: 0, // Reduce elevation
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 0.5 },
-    shadowOpacity: 0.1,
-    shadowRadius: 1,
+    shadowOffset: { width: 0, height: 0 }, // Reduce shadow offset
+    shadowOpacity: 0.05, // Reduce shadow opacity
+    shadowRadius: 0.5, // Reduce shadow radius
   },
   plantContent: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
+    height: 50,
+  },
+  profileImagePlaceholder: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#A5D6A7',
+    marginRight: 8,
+    borderWidth: 1, 
+    borderColor: '#2E7D32', 
   },
   nicknameBadge: {
     backgroundColor: '#2E7D32', // Darker green
