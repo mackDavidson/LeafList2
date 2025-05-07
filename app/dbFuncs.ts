@@ -25,17 +25,17 @@ export const setupDatabase = async () => {
     `);
     console.log('Existing tables:', existingTables.map(t => t.name));
 
-      // await db.execAsync(`
-      //   PRAGMA foreign_keys = OFF;       
-      //   DROP TABLE IF EXISTS plants;
-      //   DROP TABLE IF EXISTS plantLogs;
-      //   DROP TABLE IF EXISTS plantImages;
-      //   DROP TABLE IF EXISTS species;
-      //   DROP TABLE IF EXISTS locations;
-      //   PRAGMA foreign_keys = ON;
-      // `);
+      await db.execAsync(`
+        PRAGMA foreign_keys = OFF;       
+        DROP TABLE IF EXISTS plants;
+        DROP TABLE IF EXISTS plantLogs;
+        DROP TABLE IF EXISTS plantImages;
+        DROP TABLE IF EXISTS species;
+        DROP TABLE IF EXISTS locations;
+        PRAGMA foreign_keys = ON;
+      `);
 
-      // console.log('Existing tables:', existingTables.map(t => t.name));      
+      console.log('Existing tables:', existingTables.map(t => t.name));      
 
     // Create tables if they doesn't exist
     await db.execAsync(`
@@ -62,8 +62,10 @@ export const setupDatabase = async () => {
 
        CREATE TABLE IF NOT EXISTS plantLogs (
         logID INTEGER NOT NULL PRIMARY KEY,
+        plantID INTEGER NOT NULL,
         logDate TEXT NULL,
-        notes TEXT NULL
+        notes TEXT NULL,
+        FOREIGN KEY (plantID) REFERENCES plants(plantID) ON DELETE CASCADE
       );
 
       CREATE TABLE IF NOT EXISTS plants (
@@ -71,7 +73,6 @@ export const setupDatabase = async () => {
        speciesID INTEGER NOT NULL,
        locationID INTEGER NOT NULL,
        imageID INTEGER NULL,
-       logID INTEGER NULL,
        Nickname TEXT NOT NULL,
        indoor INT NOT NULL,
        dateAcquired TEXT NULL,
@@ -83,8 +84,7 @@ export const setupDatabase = async () => {
        UNIQUE(Nickname, speciesID, locationID) ON CONFLICT ABORT,
        FOREIGN KEY (speciesID) REFERENCES species(speciesID) ON DELETE CASCADE,
        FOREIGN KEY (locationID) REFERENCES locations(locationID) ON DELETE CASCADE,
-       FOREIGN KEY (imageID) REFERENCES plantImages(imageID) ON DELETE CASCADE,
-       FOREIGN KEY (logID) REFERENCES plantLogs(logID) ON DELETE CASCADE
+       FOREIGN KEY (imageID) REFERENCES plantImages(imageID) ON DELETE CASCADE
       );
     `);
 

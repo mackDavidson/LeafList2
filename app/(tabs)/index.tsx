@@ -59,7 +59,7 @@ export default function indoor() {
     return <View style={styles.container}><Text>Loading database...</Text></View>;
   }
 
-  // ***WORK IN PROGRESS*** Beginning of swipe list function to delete a row/plant 
+  // ***WORK IN PROGRESS*** Beginning of swipe gesture function to delete a row/plant 
   // const deleteRow = async (rowMap, plantID) => {
   //   if (rowMap[plantID]) {
   //     rowMap[plantID].closeRow();

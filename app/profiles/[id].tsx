@@ -13,7 +13,6 @@ export default function PlantProfileScreen() {
     indoor: number;
     speciesName: string;
     locationName: string;
-    logID: number | null;
     dateAcquired: string | null;
     lastWatered: string | null;
     lastFertilized: string | null;
